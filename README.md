@@ -1,16 +1,13 @@
 # tank_battle
+A Fun vibe coding project while getting bored
 
-A new Flutter project.
+## Todo
+- Level Selection
+- Online Multiplayer
+- Leaderboard
 
-## Getting Started
+## Gameplay
+### V1
+![Rec0081-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/4b304420-3a30-4066-b120-5a697df97af2)
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
