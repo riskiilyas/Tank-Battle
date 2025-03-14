@@ -1,0 +1,106 @@
+import 'package:flame/components.dart';
+import 'package:flutter/services.dart';
+import 'dart:math';
+
+import 'package:tank_battle/game/tank_battle_game.dart';
+
+class PlayerTank extends SpriteComponent with HasGameRef<TankBattleGame>, KeyboardHandler {
+  final double _speed = 200;
+  final double _rotationSpeed = 3;
+  double _direction = 0;
+  double _gunDirection = 0;
+  bool _isFiring = false;
+  final double _fireRate = 0.5;
+  double _timeSinceLastShot = 0;
+
+  PlayerTank({
+    required Vector2 position,
+    required Vector2 size,
+  }) : super(
+    position: position,
+    size: size,
+    anchor: Anchor.center,
+  );
+
+  @override
+  Future<void> onLoad() async {
+    sprite = await gameRef.loadSprite('player_tank.png');
+    angle = _direction;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    // Update firing cooldown
+    if (_timeSinceLastShot < _fireRate) {
+      _timeSinceLastShot += dt;
+    }
+
+    // Handle firing
+    if (_isFiring && _timeSinceLastShot >= _fireRate) {
+      _fire();
+      _timeSinceLastShot = 0;
+    }
+  }
+
+  void _fire() {
+    final muzzleOffset = Vector2(size.x / 2, 0)..rotate(_gunDirection);
+    final muzzlePosition = position + muzzleOffset;
+
+    // Calculate projectile direction
+    final projectileDirection = Vector2(cos(_gunDirection), sin(_gunDirection));
+
+    gameRef.fireProjectile(muzzlePosition, projectileDirection, true);
+  }
+
+  @override
+  bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    final isKeyDown = event is KeyDownEvent;
+
+    // Handle movement keys
+    if (keysPressed.contains(LogicalKeyboardKey.keyW)) {
+      print('keyW');
+      final moveVector = Vector2(cos(_direction), sin(_direction)) * _speed * (1 / 60);
+      position.add(moveVector);
+
+      // Keep player within map bounds
+      position.x = position.x.clamp(0, gameRef.mapSize.x);
+      position.y = position.y.clamp(0, gameRef.mapSize.y);
+    }
+
+    if (keysPressed.contains(LogicalKeyboardKey.keyS)) {
+      final moveVector = Vector2(cos(_direction), sin(_direction)) * _speed * (1 / 60) * -1;
+      position.add(moveVector);
+
+      // Keep player within map bounds
+      position.x = position.x.clamp(0, gameRef.mapSize.x);
+      position.y = position.y.clamp(0, gameRef.mapSize.y);
+    }
+
+    // Handle rotation
+    if (keysPressed.contains(LogicalKeyboardKey.keyA)) {
+      _direction -= _rotationSpeed * (1 / 60);
+      angle = _direction;
+      _gunDirection = _direction;
+    }
+
+    if (keysPressed.contains(LogicalKeyboardKey.keyD)) {
+      _direction += _rotationSpeed * (1 / 60);
+      angle = _direction;
+      _gunDirection = _direction;
+    }
+
+    // Handle firing
+    if (event.logicalKey == LogicalKeyboardKey.space) {
+      _isFiring = isKeyDown;
+      if (_isFiring && _timeSinceLastShot >= _fireRate) {
+        _fire();
+        _timeSinceLastShot = 0;
+      }
+      return true;
+    }
+
+    return false;
+  }
+}
