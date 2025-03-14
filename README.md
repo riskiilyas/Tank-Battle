@@ -1,5 +1,5 @@
 # tank_battle
-A Fun vibe coding project while getting bored
+A Fun vibe coding project
 
 ## Todo
 - Level Selection
