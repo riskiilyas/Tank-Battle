@@ -2,8 +2,6 @@
 class Assets {
   Assets._();
 
-  static const String fontsOrbitronBold = 'assets/fonts/Orbitron-Bold.ttf';
-  static const String fontsOrbitronRegular = 'assets/fonts/Orbitron-Regular.ttf';
   static const String imagesBuildings = 'assets/images/buildings.png';
   static const String imagesEnemyTank = 'assets/images/enemy_tank.png';
   static const String imagesExplosionSheet = 'assets/images/explosion_sheet.png';

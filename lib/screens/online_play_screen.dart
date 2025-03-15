@@ -1,0 +1,389 @@
+import 'package:flutter/material.dart';
+import 'package:tank_battle/screens/game_screen.dart';
+import 'package:tank_battle/widgets/game_button.dart';
+
+class OnlinePlayScreen extends StatefulWidget {
+  const OnlinePlayScreen({Key? key}) : super(key: key);
+
+  @override
+  State<OnlinePlayScreen> createState() => _OnlinePlayScreenState();
+}
+
+class _OnlinePlayScreenState extends State<OnlinePlayScreen> {
+  bool _isSearching = false;
+  int _searchTime = 0;
+  bool _foundMatch = false;
+  String _selectedMode = 'Team Deathmatch';
+  String _selectedRegion = 'Auto (Best Ping)';
+
+  final List<String> _gameModes = [
+    'Team Deathmatch',
+    'Capture the Flag',
+    'Free-for-All',
+    'Domination',
+    'Ranked Match',
+  ];
+
+  final List<String> _regions = [
+    'Auto (Best Ping)',
+    'North America',
+    'Europe',
+    'Asia',
+    'Oceania',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'ONLINE PLAY',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2.0,
+          ),
+        ),
+        backgroundColor: Colors.black87,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_isSearching) {
+              _cancelSearch();
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black,
+              Colors.blue.shade900.withOpacity(0.7),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: _isSearching ? _buildSearchingUI() : _buildMatchmakingUI(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatchmakingUI() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionCard(
+            title: 'GAME MODE',
+            child: DropdownButtonFormField<String>(
+              value: _selectedMode,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.black45,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade900),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade900),
+                ),
+              ),
+              dropdownColor: Colors.black87,
+              style: const TextStyle(color: Colors.white),
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedMode = newValue!;
+                });
+              },
+              items: _gameModes.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildSectionCard(
+            title: 'REGION',
+            child: DropdownButtonFormField<String>(
+              value: _selectedRegion,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.black45,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade900),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade900),
+                ),
+              ),
+              dropdownColor: Colors.black87,
+              style: const TextStyle(color: Colors.white),
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedRegion = newValue!;
+                });
+              },
+              items: _regions.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildSectionCard(
+            title: 'STATS',
+            child: Column(
+              children: [
+                _buildStatRow('Win Rate', '68%'),
+                _buildStatRow('K/D Ratio', '2.4'),
+                _buildStatRow('Matches Played', '153'),
+                _buildStatRow('Current Rank', 'Silver II'),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Center(
+            child: GameButton(
+              text: 'FIND MATCH',
+              icon: Icons.search,
+              onPressed: _startSearch,
+              color: Colors.green.shade700,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchingUI() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (!_foundMatch) ...[
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              strokeWidth: 5,
+            ),
+            const SizedBox(height: 30),
+            Text(
+              'SEARCHING FOR MATCH',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade300,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              '$_selectedMode in $_selectedRegion',
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Time elapsed: $_searchTime seconds',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white60,
+              ),
+            ),
+            const SizedBox(height: 50),
+            Text(
+              'Players online: ${246 + _searchTime}',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Matches in progress: ${35 + (_searchTime ~/ 3)}',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.orange,
+              ),
+            ),
+            const Spacer(),
+            GameButton(
+              text: 'CANCEL',
+              icon: Icons.cancel,
+              onPressed: _cancelSearch,
+              color: Colors.red.shade700,
+            ),
+          ] else ...[
+            const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 80,
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'MATCH FOUND!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Starting $_selectedMode match',
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'Loading map...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 50),
+            const LinearProgressIndicator(
+              value: 0.8,
+              minHeight: 10,
+              backgroundColor: Colors.grey,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Card(
+      color: Colors.black54,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.blue.shade900, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.amber,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const Divider(color: Colors.blue),
+            const SizedBox(height: 10),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white70,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+      _searchTime = 0;
+      _foundMatch = false;
+    });
+
+    // Simulate search time increasing
+    Future.delayed(const Duration(seconds: 1), () {
+      _searchTimerTick();
+    });
+  }
+
+  void _searchTimerTick() {
+    if (!mounted) return;
+
+    setState(() {
+      _searchTime++;
+    });
+
+    // Simulate finding a match after 5 seconds
+    if (_searchTime >= 5 && !_foundMatch) {
+      setState(() {
+        _foundMatch = true;
+      });
+
+      // Navigate to game after 3 more seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const GameScreen(),
+            ),
+          );
+        }
+      });
+    } else if (!_foundMatch) {
+      // Continue ticking if we haven't found a match
+      Future.delayed(const Duration(seconds: 1), () {
+        _searchTimerTick();
+      });
+    }
+  }
+
+  void _cancelSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchTime = 0;
+      _foundMatch = false;
+    });
+  }
+}
