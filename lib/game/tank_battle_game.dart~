@@ -68,11 +68,19 @@ class TankBattleGame extends FlameGame with KeyboardEvents, HasCollisionDetectio
     );
     add(player);
 
-    // Configure camera to follow player
+    // Configure camera
     camera.follow(player);
 
-    // If you want to adjust zoom, you can try setting the viewfinder's zoom:
-    // camera.viewfinder.zoom = 1.0;
+    // Set camera zoom level - increase the value to zoom out and see more of the map
+    camera.zoom = 1.0;
+
+    // Set camera boundaries to match the map size
+    camera.w = Rect.fromLTRB(
+        0,                // Left boundary
+        0,                // Top boundary
+        mapSize.x,        // Right boundary
+        mapSize.y         // Bottom boundary
+    );
 
     // Spawn enemies
     await _spawnEnemies();
@@ -178,10 +186,6 @@ class TankBattleGame extends FlameGame with KeyboardEvents, HasCollisionDetectio
   @override
   void update(double dt) {
     super.update(dt);
-
-    // Ensure player stays within map boundaries
-    player.position.x = player.position.x.clamp(0, mapSize.x);
-    player.position.y = player.position.y.clamp(0, mapSize.y);
 
     // Update UI components to follow camera
     if (scoreText != null && healthText != null) {
@@ -380,7 +384,8 @@ class TankBattleGame extends FlameGame with KeyboardEvents, HasCollisionDetectio
     // Reset player position
     player.position = Vector2(mapSize.x / 2, mapSize.y / 2);
 
-    // The camera.follow set in onLoad should continue to work
+    // Make sure camera follows player to new position
+    camera.follow(player);
 
     // Spawn new enemies
     _spawnEnemies();

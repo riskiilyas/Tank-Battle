@@ -1,0 +1,335 @@
+import 'dart:math';
+import 'package:flame/events.dart';
+import 'package:flutter/material.dart';
+import 'package:flame/components.dart';
+import 'package:tank_battle/game/tank_battle_game.dart';
+
+class MobileControls extends Component with HasGameRef<TankBattleGame> {
+  final Function() onMenuPressed;
+  final Function() onChatPressed;
+
+  // Joystick variables
+  late Vector2 joystickCenter;
+  late Vector2 joystickPosition;
+  final double joystickRadius = 60;
+  final double joystickKnobRadius = 20;
+  bool joystickDragging = false;
+
+  // Fire button variables
+  late Rect fireButtonRect;
+  bool fireButtonPressed = false;
+
+  // Menu button variables
+  late Rect menuButtonRect;
+
+  // Chat button variables
+  late Rect chatButtonRect;
+
+  MobileControls({required this.onMenuPressed, required this.onChatPressed});
+
+  @override
+  Future<void> onLoad() async {
+    final screenWidth = gameRef.size.x;
+    final screenHeight = gameRef.size.y;
+
+    // Position joystick at bottom left
+    joystickCenter = Vector2(joystickRadius + 20, screenHeight - joystickRadius - 20);
+    joystickPosition = joystickCenter.clone();
+
+    // Position fire button at bottom right
+    final fireButtonSize = 70.0;
+    fireButtonRect = Rect.fromLTWH(
+      screenWidth - fireButtonSize - 20,
+      screenHeight - fireButtonSize - 20,
+      fireButtonSize,
+      fireButtonSize,
+    );
+
+    // Position menu button at top right
+    final menuButtonSize = 50.0;
+    menuButtonRect = Rect.fromLTWH(
+      screenWidth - menuButtonSize - 20,
+      20,
+      menuButtonSize,
+      menuButtonSize,
+    );
+
+    // Position chat button at top right, below menu button
+    final chatButtonSize = 50.0;
+    chatButtonRect = Rect.fromLTWH(
+      screenWidth - chatButtonSize - 20,
+      menuButtonSize + 30,
+      chatButtonSize,
+      chatButtonSize,
+    );
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Draw joystick base
+    final joystickBasePaint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      Offset(joystickCenter.x, joystickCenter.y),
+      joystickRadius,
+      joystickBasePaint,
+    );
+
+    // Draw joystick border
+    final joystickBorderPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawCircle(
+      Offset(joystickCenter.x, joystickCenter.y),
+      joystickRadius,
+      joystickBorderPaint,
+    );
+
+    // Draw joystick knob
+    final joystickKnobPaint = Paint()
+      ..color = Colors.white.withOpacity(0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      Offset(joystickPosition.x, joystickPosition.y),
+      joystickKnobRadius,
+      joystickKnobPaint,
+    );
+
+    // Draw fire button
+    final fireButtonPaint = Paint()
+      ..color = fireButtonPressed
+          ? Colors.red.withOpacity(0.7)
+          : Colors.red.withOpacity(0.5)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(fireButtonRect, const Radius.circular(15)),
+      fireButtonPaint,
+    );
+
+    // Draw fire icon
+    final TextPainter firePainter = TextPainter(
+      text: const TextSpan(
+        text: '🔥',
+        style: TextStyle(fontSize: 30),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    firePainter.layout();
+    firePainter.paint(
+      canvas,
+      Offset(
+        fireButtonRect.center.dx - firePainter.width / 2,
+        fireButtonRect.center.dy - firePainter.height / 2,
+      ),
+    );
+
+    // Draw menu button
+    final menuButtonPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.6)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(menuButtonRect, const Radius.circular(10)),
+      menuButtonPaint,
+    );
+
+    // Draw menu icon
+    final TextPainter menuPainter = TextPainter(
+      text: const TextSpan(
+        text: '≡',
+        style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    menuPainter.layout();
+    menuPainter.paint(
+      canvas,
+      Offset(
+        menuButtonRect.center.dx - menuPainter.width / 2,
+        menuButtonRect.center.dy - menuPainter.height / 2,
+      ),
+    );
+
+    // Draw chat button
+    final chatButtonPaint = Paint()
+      ..color = Colors.green.withOpacity(0.6)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(chatButtonRect, const Radius.circular(10)),
+      chatButtonPaint,
+    );
+
+    // Draw chat icon
+    final TextPainter chatPainter = TextPainter(
+      text: const TextSpan(
+        text: '💬',
+        style: TextStyle(fontSize: 24),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    chatPainter.layout();
+    chatPainter.paint(
+      canvas,
+      Offset(
+        chatButtonRect.center.dx - chatPainter.width / 2,
+        chatButtonRect.center.dy - chatPainter.height / 2,
+      ),
+    );
+  }
+
+  bool onTapDown(TapDownInfo info) {
+    final touchPosition = info.eventPosition.widget;
+
+    // Check if fire button was pressed
+    if (fireButtonRect.contains(Offset(touchPosition.x, touchPosition.y))) {
+      fireButtonPressed = true;
+      gameRef.player.setFiring(true);
+      return true;
+    }
+
+    // Check if joystick was pressed
+    final distance = joystickCenter.distanceTo(touchPosition);
+    if (distance <= joystickRadius) {
+      joystickDragging = true;
+      updateJoystickPosition(touchPosition);
+      return true;
+    }
+
+    // Check if menu button was pressed
+    if (menuButtonRect.contains(Offset(touchPosition.x, touchPosition.y))) {
+      onMenuPressed();
+      return true;
+    }
+
+    // Check if chat button was pressed
+    if (chatButtonRect.contains(Offset(touchPosition.x, touchPosition.y))) {
+      onChatPressed();
+      return true;
+    }
+
+    return false;
+  }
+
+  bool onTapUp(TapUpInfo info) {
+    if (fireButtonPressed) {
+      fireButtonPressed = false;
+      gameRef.player.setFiring(false);
+      return true;
+    }
+
+    if (joystickDragging) {
+      joystickDragging = false;
+      joystickPosition = joystickCenter.clone();
+
+      // Stop tank movement
+      gameRef.player.setMovingForward(false);
+      gameRef.player.setMovingBackward(false);
+      gameRef.player.setRotatingLeft(false);
+      gameRef.player.setRotatingRight(false);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  bool onDragUpdate(DragUpdateInfo info) {
+    if (joystickDragging) {
+      updateJoystickPosition(info.eventPosition.widget);
+      return true;
+    }
+    return false;
+  }
+
+  bool onDragEnd(DragEndInfo info) {
+    if (joystickDragging) {
+      joystickDragging = false;
+      joystickPosition = joystickCenter.clone();
+
+      // Stop tank movement
+      gameRef.player.setMovingForward(false);
+      gameRef.player.setMovingBackward(false);
+      gameRef.player.setRotatingLeft(false);
+      gameRef.player.setRotatingRight(false);
+
+      return true;
+    }
+    return false;
+  }
+
+  void updateJoystickPosition(Vector2 touchPosition) {
+    final joystickDelta = touchPosition - joystickCenter;
+    final distance = joystickDelta.length;
+
+    // Limit joystick position to its radius
+    if (distance <= joystickRadius) {
+      joystickPosition = touchPosition.clone();
+    } else {
+      joystickPosition = joystickCenter + joystickDelta.normalized() * joystickRadius;
+    }
+
+    // Calculate joystick direction and intensity
+    final normalizedDelta = joystickDelta.normalized();
+    final intensity = min(distance / joystickRadius, 1.0);
+
+    // Calculate angle to determine direction
+    final angle = atan2(normalizedDelta.y, normalizedDelta.x);
+
+    // Convert angle to determine controls
+    // Angles are in radians: right = 0, down = PI/2, left = PI, up = -PI/2
+    const double rightAngle = 0;
+    const double downAngle = pi / 2;
+    const double leftAngle = pi;
+    const double upAngle = -pi / 2;
+
+    // Determine which direction the joystick is pointing
+    // We use a tolerance of PI/4 (45 degrees) for each direction
+    const double tolerance = pi / 4;
+
+    // Reset all movement first
+    gameRef.player.setMovingForward(false);
+    gameRef.player.setMovingBackward(false);
+    gameRef.player.setRotatingLeft(false);
+    gameRef.player.setRotatingRight(false);
+
+    // Forward/backward motion (up/down on joystick)
+    if (angle > upAngle - tolerance && angle < upAngle + tolerance) {
+      // Moving forward
+      gameRef.player.setMovingForward(true);
+    } else if (angle > downAngle - tolerance && angle < downAngle + tolerance) {
+      // Moving backward
+      gameRef.player.setMovingBackward(true);
+    }
+
+    // Left/right rotation (left/right on joystick)
+    if ((angle > leftAngle - tolerance && angle <= leftAngle) ||
+        (angle >= -leftAngle && angle < -leftAngle + tolerance)) {
+      // Rotating left
+      gameRef.player.setRotatingLeft(true);
+    } else if (angle > rightAngle - tolerance && angle < rightAngle + tolerance) {
+      // Rotating right
+      gameRef.player.setRotatingRight(true);
+    }
+
+    // Diagonal controls for combined movement
+    if (angle > upAngle + tolerance && angle < leftAngle - tolerance) {
+      // Forward and left
+      gameRef.player.setMovingForward(true);
+      gameRef.player.setRotatingLeft(true);
+    } else if (angle > rightAngle + tolerance && angle < downAngle - tolerance) {
+      // Backward and right
+      gameRef.player.setMovingBackward(true);
+      gameRef.player.setRotatingRight(true);
+    } else if (angle > downAngle + tolerance && angle < leftAngle - tolerance) {
+      // Backward and left
+      gameRef.player.setMovingBackward(true);
+      gameRef.player.setRotatingLeft(true);
+    } else if ((angle > -leftAngle + tolerance && angle < upAngle - tolerance) ||
+        (angle > -tolerance && angle < tolerance)) {
+      // Forward and right
+      gameRef.player.setMovingForward(true);
+      gameRef.player.setRotatingRight(true);
+    }
+  }
+}
