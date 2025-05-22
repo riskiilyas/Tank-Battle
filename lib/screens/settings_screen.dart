@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:tank_battle/services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -8,12 +10,16 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  double _musicVolume = 0.7;
-  double _sfxVolume = 0.8;
-  bool _vibrationEnabled = true;
-  String _selectedDifficulty = 'Medium';
-  bool _showFrameRate = false;
-  String _selectedControlScheme = 'Virtual Joystick';
+  final SettingsService _settings = SettingsService();
+  bool _isLoading = true;
+
+  // Settings values
+  late double _musicVolume;
+  late double _sfxVolume;
+  late bool _vibrationEnabled;
+  late String _selectedDifficulty;
+  late bool _showFrameRate;
+  late String _selectedControlScheme;
 
   final List<String> _difficulties = ['Easy', 'Medium', 'Hard', 'Extreme'];
   final List<String> _controlSchemes = [
@@ -24,7 +30,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    // Initialize settings service if not already initialized
+    if (!_settings.isInitialized) {
+      await _settings.init();
+    }
+
+    // Load saved settings
+    setState(() {
+      _musicVolume = _settings.musicVolume;
+      _sfxVolume = _settings.sfxVolume;
+      _vibrationEnabled = _settings.vibrationEnabled;
+      _selectedDifficulty = _settings.difficulty;
+      _showFrameRate = _settings.showFrameRate;
+      _selectedControlScheme = _settings.controlScheme;
+      _isLoading = false;
+    });
+  }
+
+  // Provide haptic feedback when toggling settings
+  void _triggerHapticFeedback() {
+    if (_vibrationEnabled) {
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -40,6 +88,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          // Reset button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _showResetConfirmationDialog,
+            tooltip: 'Reset to Defaults',
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -63,9 +119,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Music Volume',
                   _musicVolume,
                       (value) {
+                    _triggerHapticFeedback();
                     setState(() {
                       _musicVolume = value;
                     });
+                    // Apply music volume in real-time (no need to wait for save)
+                    // TODO: Implement audio service integration if needed
                   },
                   Icons.music_note,
                 ),
@@ -73,9 +132,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'SFX Volume',
                   _sfxVolume,
                       (value) {
+                    _triggerHapticFeedback();
                     setState(() {
                       _sfxVolume = value;
                     });
+                    // TODO: Implement audio service integration if needed
                   },
                   Icons.volume_up,
                 ),
@@ -87,6 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _selectedDifficulty,
                   _difficulties,
                       (value) {
+                    _triggerHapticFeedback();
                     setState(() {
                       _selectedDifficulty = value!;
                     });
@@ -98,6 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _selectedControlScheme,
                   _controlSchemes,
                       (value) {
+                    _triggerHapticFeedback();
                     setState(() {
                       _selectedControlScheme = value!;
                     });
@@ -114,6 +177,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() {
                       _vibrationEnabled = value;
                     });
+                    if (value) {
+                      HapticFeedback.mediumImpact();
+                    }
                   },
                   Icons.vibration,
                 ),
@@ -121,6 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Show Frame Rate',
                   _showFrameRate,
                       (value) {
+                    _triggerHapticFeedback();
                     setState(() {
                       _showFrameRate = value;
                     });
@@ -136,7 +203,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       backgroundColor: Colors.green.shade800,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
+                          horizontal: 30,
+                          vertical: 15
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -161,29 +230,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.amber,
-          letterSpacing: 1.5,
-          shadows: [
-            Shadow(
-              color: Colors.black,
-              offset: Offset(1, 1),
-              blurRadius: 2,
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.amber,
+              letterSpacing: 1.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black,
+                  offset: Offset(1, 1),
+                  blurRadius: 2,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 2,
+              color: Colors.amber.withOpacity(0.3),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSliderSetting(String title,
+  Widget _buildSliderSetting(
+      String title,
       double value,
       Function(double) onChanged,
-      IconData icon,) {
+      IconData icon,
+      ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       padding: const EdgeInsets.all(12.0),
@@ -216,21 +298,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-          Slider(
-            value: value,
-            onChanged: onChanged,
-            activeColor: Colors.blue.shade400,
-            inactiveColor: Colors.grey.shade800,
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 8,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+            ),
+            child: Slider(
+              value: value,
+              onChanged: onChanged,
+              activeColor: Colors.blue.shade400,
+              inactiveColor: Colors.grey.shade800,
+              thumbColor: Colors.white,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSwitchSetting(String title,
+  Widget _buildSwitchSetting(
+      String title,
       bool value,
       Function(bool) onChanged,
-      IconData icon,) {
+      IconData icon,
+      ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       padding: const EdgeInsets.all(12.0),
@@ -262,11 +354,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDropdownSetting(String title,
+  Widget _buildDropdownSetting(
+      String title,
       String currentValue,
       List<String> options,
       Function(String?) onChanged,
-      IconData icon,) {
+      IconData icon,
+      ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       padding: const EdgeInsets.all(12.0),
@@ -314,17 +408,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _saveSettings() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings saved!'),
-        duration: Duration(seconds: 2),
-        backgroundColor: Colors.green,
+  void _showResetConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: const Text(
+          'Reset Settings?',
+          style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'This will restore all settings to their default values.',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange.shade800,
+            ),
+            child: const Text('Reset'),
+            onPressed: () {
+              Navigator.pop(context);
+              _resetToDefaults();
+            },
+          ),
+        ],
       ),
     );
+  }
 
-    Future.delayed(const Duration(seconds: 1), () {
-      Navigator.pop(context);
-    });
+  Future<void> _resetToDefaults() async {
+    setState(() => _isLoading = true);
+
+    await _settings.resetToDefaults();
+
+    // Reload settings from service
+    await _loadSettings();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Settings reset to defaults'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  Future<void> _saveSettings() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _settings.applySettings(
+        musicVolume: _musicVolume,
+        sfxVolume: _sfxVolume,
+        vibrationEnabled: _vibrationEnabled,
+        difficulty: _selectedDifficulty,
+        showFrameRate: _showFrameRate,
+        controlScheme: _selectedControlScheme,
+      );
+
+      setState(() => _isLoading = false);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Settings saved successfully!'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Optional: Return to previous screen
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving settings: $e'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

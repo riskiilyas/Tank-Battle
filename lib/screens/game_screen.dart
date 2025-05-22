@@ -22,7 +22,9 @@ bool isMobilePlatform() {
 }
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic>? levelData;
+
+  const GameScreen({Key? key, this.levelData}) : super(key: key);
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -41,8 +43,10 @@ class _GameScreenState extends State<GameScreen> {
       isMobile: isMobilePlatform(),
       onMenuPressed: _showMenuDialog,
       onChatPressed: _toggleChatPanel,
+      levelData: widget.levelData, // Pass level data to game
     );
   }
+
 
   @override
   void dispose() {

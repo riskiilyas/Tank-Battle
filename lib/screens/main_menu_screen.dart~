@@ -118,10 +118,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     required IconData icon,
     required VoidCallback onPressed,
     required int index,
-    bool smallScreen = false,
+  bool smallScreen = false,
     Color color = Colors.blue,
   }) {
-    if (smallScreen) {
+    if(smallScreen) {
       return Expanded(
         child: SizedBox(
           width: 300,
@@ -359,7 +359,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                         ],
                       ),
                     ),
-
+                
                     // Menu Buttons
                     Expanded(
                       child: Center(
@@ -377,6 +377,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   ],
                 ),
               ),
+
 
               // Version info
               const Text(
@@ -417,63 +418,59 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     final isSmallScreen = screenHeight < 600 || smallScreen;
 
     return [
-      SizedBox(height: isSmallScreen ? 0 : 10),
-      _buildMenuButton(
-          text: "PLAY CASUAL",
-          icon: Icons.play_arrow,
-          onPressed: _onPlayCasual,
-          index: 0,
-          color: Colors.green.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "LEVEL SELECT",
-          icon: Icons.view_module,
-          onPressed: _onLevelSelection,
-          index: 1,
-          color: Colors.blue.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "PLAY ONLINE",
-          icon: Icons.public,
-          onPressed: _onPlayOnline,
-          index: 2,
-          color: Colors.purple.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "LEADERBOARD",
-          icon: Icons.leaderboard,
-          onPressed: _onLeaderboard,
-          index: 3,
-          color: Colors.amber.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "FRIEND LIST",
-          icon: Icons.people,
-          onPressed: _onFriendList,
-          index: 4,
-          color: Colors.orange.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "SETTINGS",
-          icon: Icons.settings,
-          onPressed: _onSettings,
-          index: 5,
-          color: Colors.teal.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 3 : 10),
-      _buildMenuButton(
-          text: "EXIT",
-          icon: Icons.exit_to_app,
-          onPressed: _onExit,
-          index: 6,
-          color: Colors.red.shade700,
-          smallScreen: smallScreen),
-      SizedBox(height: isSmallScreen ? 0 : 10),
-    ];
-  }
+    SizedBox(height: isSmallScreen ? 0 : 10),
+    _buildMenuButton(
+    text: "PLAY CASUAL",
+    icon: Icons.play_arrow,
+    onPressed: _onPlayCasual,
+    index: 0,
+    color: Colors.green.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 : 10),
+    _buildMenuButton(
+    text: "LEVEL SELECT",
+    icon: Icons.view_module,
+    onPressed: _onLevelSelection,
+    index: 1,
+    color: Colors.blue.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 : 10),
+    _buildMenuButton(
+    text: "PLAY ONLINE",
+    icon: Icons.public,
+    onPressed: _onPlayOnline,
+    index: 2,
+    color: Colors.purple.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 : 10),
+    _buildMenuButton(
+    text: "LEADERBOARD",
+    icon: Icons.leaderboard,
+    onPressed: _onLeaderboard,
+    index: 3,
+    color: Colors.amber.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 : 10),
+    _buildMenuButton(
+    text: "FRIEND LIST",
+    icon: Icons.people,
+    onPressed: _onFriendList,
+    index: 4,
+    color: Colors.orange.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 : 10),
+    _buildMenuButton(
+    text: "SETTINGS",
+    icon: Icons.settings,
+    onPressed: _onSettings,
+    index: 5,
+    color: Colors.teal.shade700,
+    smallScreen: smallScreen
+    ),
+    SizedBox(height: isSmallScreen ? 3 :
 }

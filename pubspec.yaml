@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   flame: ^1.26.0
   google_fonts: ^6.2.1  # Added for easier font management
+  shared_preferences: ^2.5.2
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:

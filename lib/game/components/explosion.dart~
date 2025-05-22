@@ -1,8 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flutter/services.dart';
 import 'package:tank_battle/game/tank_battle_game.dart';
-import 'package:tank_battle/screens/game_screen.dart';
-import 'package:tank_battle/settings/game_settings.dart';
 
 
 class Explosion extends SpriteAnimationComponent with HasGameRef<TankBattleGame> {
@@ -18,9 +15,6 @@ class Explosion extends SpriteAnimationComponent with HasGameRef<TankBattleGame>
 
   @override
   Future<void> onLoad() async {
-    if (GameSettings().vibrationEnabled) {
-      HapticFeedback.mediumImpact();
-    }
     final spriteSheet = await gameRef.loadSprite('explosion_sheet.png');
     final animation = SpriteAnimation.fromFrameData(
       spriteSheet.image,

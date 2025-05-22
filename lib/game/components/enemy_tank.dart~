@@ -1,10 +1,9 @@
 import 'dart:math';
-import 'package:flame/collisions.dart';
 import 'package:tank_battle/game/components/player_tank.dart';
 import 'package:tank_battle/game/tank_battle_game.dart';
 import 'package:flame/components.dart';
 
-class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, CollisionCallbacks {
+class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame> {
   final PlayerTank playerRef;
   double _speed = 100;
   final double _rotationSpeed = 2;
@@ -20,9 +19,6 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
   double _patrolDuration = 3.0;
   bool _isChasing = false;
   Vector2 _patrolTarget = Vector2.zero();
-
-  // Store previous position for collision handling
-  Vector2 _previousPosition = Vector2.zero();
 
   EnemyTank({
     required Vector2 position,
@@ -44,10 +40,6 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
   Future<void> onLoad() async {
     sprite = await gameRef.loadSprite('enemy_tank.png');
     angle = _direction;
-    _previousPosition = position.clone();
-
-    // Add collision detection
-    add(RectangleHitbox());
 
     // Initialize patrol target
     _setNewPatrolTarget();
@@ -56,9 +48,6 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
   @override
   void update(double dt) {
     super.update(dt);
-
-    // Store current position before movement
-    _previousPosition = position.clone();
 
     // Update firing cooldown
     if (_timeSinceLastShot < _fireRate) {
@@ -80,68 +69,11 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
       _patrol(dt);
     }
 
-    // Enforce bounds for enemy tanks too
-    _enforceBounds();
-
     // Try to fire if player is in range
     if (distanceToPlayer < _firingRange && _timeSinceLastShot >= _fireRate) {
       _fireAtPlayer();
       _timeSinceLastShot = 0;
     }
-  }
-
-  void _enforceBounds() {
-    final halfWidth = size.x / 2;
-    final halfHeight = size.y / 2;
-
-    // Calculate bounds with proper margins
-    final leftBound = halfWidth;
-    final rightBound = gameRef.mapSize.x - halfWidth;
-    final topBound = halfHeight;
-    final bottomBound = gameRef.mapSize.y - halfHeight;
-
-    // Check and fix horizontal bounds
-    if (position.x < leftBound) {
-      position.x = leftBound;
-    } else if (position.x > rightBound) {
-      position.x = rightBound;
-    }
-
-    // Check and fix vertical bounds
-    if (position.y < topBound) {
-      position.y = topBound;
-    } else if (position.y > bottomBound) {
-      position.y = bottomBound;
-    }
-  }
-
-  @override
-  bool onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    // Handle collision with terrain objects and other tanks
-    if (other is SpriteComponent && gameRef.terrains.contains(other)) {
-      // Collision with terrain - revert to previous position and change direction
-      position = _previousPosition.clone();
-      _direction += pi / 2; // Turn 90 degrees
-      angle = _direction;
-      _setNewPatrolTarget(); // Find new patrol target
-      return true;
-    }
-
-    if (other is PlayerTank) {
-      // Collision with player tank - revert to previous position
-      position = _previousPosition.clone();
-      return true;
-    }
-
-    if (other is EnemyTank && other != this) {
-      // Collision with another enemy tank - revert and avoid
-      position = _previousPosition.clone();
-      _direction += pi / 4; // Turn 45 degrees
-      angle = _direction;
-      return true;
-    }
-
-    return true;
   }
 
   void _chasePlayer(double dt) {
@@ -155,6 +87,10 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
     // Move forward
     final moveVector = Vector2(cos(_direction), sin(_direction)) * _speed * dt;
     position.add(moveVector);
+
+    // Keep within map bounds
+    position.x = position.x.clamp(0, gameRef.mapSize.x);
+    position.y = position.y.clamp(0, gameRef.mapSize.y);
   }
 
   void _patrol(double dt) {
@@ -175,6 +111,10 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
     // Move forward
     final moveVector = Vector2(cos(_direction), sin(_direction)) * (_speed * 0.5) * dt;
     position.add(moveVector);
+
+    // Keep within map bounds
+    position.x = position.x.clamp(0, gameRef.mapSize.x);
+    position.y = position.y.clamp(0, gameRef.mapSize.y);
   }
 
   void _rotateTowards(double targetAngle, double dt) {
@@ -206,12 +146,9 @@ class EnemyTank extends SpriteComponent with HasGameRef<TankBattleGame>, Collisi
 
     _patrolTarget = position + Vector2(cos(angle), sin(angle)) * distance;
 
-    // Make sure the target is within map bounds with proper margins
-    final halfWidth = size.x / 2;
-    final halfHeight = size.y / 2;
-
-    _patrolTarget.x = _patrolTarget.x.clamp(halfWidth, gameRef.mapSize.x - halfWidth);
-    _patrolTarget.y = _patrolTarget.y.clamp(halfHeight, gameRef.mapSize.y - halfHeight);
+    // Make sure the target is within map bounds
+    _patrolTarget.x = _patrolTarget.x.clamp(0, gameRef.mapSize.x);
+    _patrolTarget.y = _patrolTarget.y.clamp(0, gameRef.mapSize.y);
 
     // Randomize patrol duration
     _patrolDuration = 2.0 + random.nextDouble() * 3.0;

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tank_battle/screens/main_menu_screen.dart';
 
-void main() {
+import 'settings/game_settings.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Force landscape orientation for better gameplay and menu experience
@@ -19,6 +21,10 @@ void main() {
       systemNavigationBarColor: Colors.black,
     ),
   );
+
+  // Initialize game settings
+  final gameSettings = GameSettings();
+  await gameSettings.init();
 
   runApp(const TankBattleApp());
 }

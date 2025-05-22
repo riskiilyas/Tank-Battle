@@ -1,0 +1,234 @@
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Service to handle authentication-related operations.
+class AuthService {
+  // Singleton instance
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  // Keys for SharedPreferences
+  static const String _tokenKey = 'auth_token';
+  static const String _userIdKey = 'user_id';
+  static const String _usernameKey = 'username';
+  static const String _emailKey = 'email';
+
+  // Current authentication state
+  bool _isAuthenticated = false;
+  String? _currentToken;
+  String? _currentUserId;
+  String? _currentUsername;
+  String? _currentEmail;
+
+  // StreamController for auth state changes
+  final _authStateController = StreamController<bool>.broadcast();
+
+  // Getters
+  bool get isAuthenticated => _isAuthenticated;
+  String? get currentToken => _currentToken;
+  String? get currentUserId => _currentUserId;
+  String? get currentUsername => _currentUsername;
+  String? get currentEmail => _currentEmail;
+  Stream<bool> get authStateChanges => _authStateController.stream;
+
+  /// Initialize the auth service and load saved credentials
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load saved credentials
+    _currentToken = prefs.getString(_tokenKey);
+    _currentUserId = prefs.getString(_userIdKey);
+    _currentUsername = prefs.getString(_usernameKey);
+    _currentEmail = prefs.getString(_emailKey);
+
+    // Set authentication state
+    _isAuthenticated = _currentToken != null;
+
+    // Notify listeners
+    _authStateController.add(_isAuthenticated);
+  }
+
+  /// Sign in with email and password
+  Future<bool> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      // TODO: Make actual API call to sign in
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, any non-empty credentials will work
+      if (email.isNotEmpty && password.isNotEmpty) {
+        final token = 'demo_token_${DateTime.now().millisecondsSinceEpoch}';
+        final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+        final username = email.split('@').first;
+
+        // Save credentials
+        await _saveCredentials(token, userId, username, email);
+
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      // Handle any errors
+      print('Error signing in: $e');
+      return false;
+    }
+  }
+
+  /// Sign in with Google
+  Future<bool> signInWithGoogle() async {
+    try {
+      // TODO: Implement Google Sign In
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, always succeed
+      final token = 'google_token_${DateTime.now().millisecondsSinceEpoch}';
+      final userId = 'google_user_${DateTime.now().millisecondsSinceEpoch}';
+      final username = 'GoogleUser';
+      final email = 'google.user@example.com';
+
+      // Save credentials
+      await _saveCredentials(token, userId, username, email);
+
+      return true;
+    } catch (e) {
+      // Handle any errors
+      print('Error signing in with Google: $e');
+      return false;
+    }
+  }
+
+  /// Sign up with email and password
+  Future<bool> signUpWithEmailAndPassword(
+      String username,
+      String email,
+      String password,
+      ) async {
+    try {
+      // TODO: Make actual API call to sign up
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, any non-empty credentials will work
+      if (username.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
+        // In a real app, we would verify the user via OTP or email before signing in
+        // For demo, just return success without actually signing in
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      // Handle any errors
+      print('Error signing up: $e');
+      return false;
+    }
+  }
+
+  /// Verify OTP code
+  Future<bool> verifyOtp(String email, String otp) async {
+    try {
+      // TODO: Make actual API call to verify OTP
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, any 6-digit OTP will work
+      return otp.length == 6;
+    } catch (e) {
+      // Handle any errors
+      print('Error verifying OTP: $e');
+      return false;
+    }
+  }
+
+  /// Send password reset email
+  Future<bool> sendPasswordResetEmail(String email) async {
+    try {
+      // TODO: Make actual API call to send reset email
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, any non-empty email will work
+      return email.isNotEmpty;
+    } catch (e) {
+      // Handle any errors
+      print('Error sending password reset email: $e');
+      return false;
+    }
+  }
+
+  /// Reset password with new password
+  Future<bool> resetPassword(String email, String newPassword) async {
+    try {
+      // TODO: Make actual API call to reset password
+
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+
+      // For demo purposes, any non-empty password will work
+      return newPassword.isNotEmpty;
+    } catch (e) {
+      // Handle any errors
+      print('Error resetting password: $e');
+      return false;
+    }
+  }
+
+  /// Sign out current user
+  Future<void> signOut() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Clear saved credentials
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userIdKey);
+    await prefs.remove(_usernameKey);
+    await prefs.remove(_emailKey);
+
+    // Update state
+    _currentToken = null;
+    _currentUserId = null;
+    _currentUsername = null;
+    _currentEmail = null;
+    _isAuthenticated = false;
+
+    // Notify listeners
+    _authStateController.add(false);
+  }
+
+  /// Save user credentials to SharedPreferences
+  Future<void> _saveCredentials(
+      String token,
+      String userId,
+      String username,
+      String email,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Save to SharedPreferences
+    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_userIdKey, userId);
+    await prefs.setString(_usernameKey, username);
+    await prefs.setString(_emailKey, email);
+
+    // Update current state
+    _currentToken = token;
+    _currentUserId = userId;
+    _currentUsername = username;
+    _currentEmail = email;
+    _isAuthenticated = true;
+
+    // Notify listeners
+    _authStateController.add(true);
+  }
+
+  /// Dispose resources
+  void dispose() {
+    _authStateController.close();
+  }
+}
